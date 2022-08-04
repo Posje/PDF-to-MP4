@@ -45,10 +45,10 @@ class PfdToMp4(QtWidgets.QMainWindow, UI_PDFTOMP4):
 
     def OnExecute(self):
         self.Command("mkdir", frames)
-        self.command("pdftoppm", "self.edSource -png frames/frame")
+        self.Command("pdftoppm", "self.edSource -png frames/frame")
         if not self.chKeep.isChecked():
             self.Command("rm", frames)
-        
+
 
     def Command(self, *command):
         process = Popen(command, stdout=PIPE, stderr=PIPE)
