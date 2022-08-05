@@ -16,6 +16,7 @@ from PyQt5.QtGui import QIcon
 from subprocess import Popen, PIPE
 
 _CURR = os.path.abspath(os.path.dirname(__file__))
+print(os.listdir(_CURR))
 UI_PDFTOMP4 = uic.loadUiType(os.path.join(_CURR, "pdftomp4.ui"))[0]
 
 class PfdToMp4(QtWidgets.QMainWindow, UI_PDFTOMP4):
