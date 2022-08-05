@@ -6,9 +6,12 @@ import argparse
 
 import sys
 import os
+import tempfile
+import shutil
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QApplication, QFileDialog
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox
 from PyQt5.QtGui import QIcon
+
 
 from subprocess import Popen, PIPE
 
@@ -28,7 +31,7 @@ class PfdToMp4(QtWidgets.QMainWindow, UI_PDFTOMP4):
     def OnOpen(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"Open source PDF", "","PDF (*.pdf);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self, "Open source PDF", "", "PDF (*.pdf);;All Files (*)", options=options)
         if fileName:
             self.edSource.setText(fileName)
         self.Update()
@@ -36,7 +39,7 @@ class PfdToMp4(QtWidgets.QMainWindow, UI_PDFTOMP4):
     def OnSave(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,"Select destination MP4","untitled.mp4","Video (*.mp4);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self, "Select destination MP4", "untitled.mp4", "Video (*.mp4);;All Files (*)", options=options)
         if fileName:
             if os.path.splitext(fileName)[-1] != ".mp4":
                 fileName += ".mp4"
@@ -44,11 +47,15 @@ class PfdToMp4(QtWidgets.QMainWindow, UI_PDFTOMP4):
         self.Update()
 
     def OnExecute(self):
-        self.Command("mkdir", frames)
-        self.Command("pdftoppm", "self.edSource -png frames/frame")
-        if not self.chKeep.isChecked():
-            self.Command("rm", frames)
+        tmpDir = tempfile.mkdtemp()
+        self.Command("pdftoppm", self.edSource.text(), "-png", os.path.join(tmpDir, "frame"))
 
+        self.Command("ffmpeg", "-r", str(self.spFramerate.value()), "-i", os.path.join(tmpDir, "frame-%01d.png"), self.edDestination.text())
+
+        if not self.chKeep.isChecked():
+            shutil.rmtree(tmpDir)
+        else:
+            QMessageBox.about(self, "Keeping frame files", f"The frame files are stored in: {tmpDir}")
 
     def Command(self, *command):
         process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -64,7 +71,7 @@ def Main():
     QtCore.QCoreApplication.setApplicationName("Pdf to Mp4");
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_X11InitThreads)
     app = QtWidgets.QApplication([])
-    #app.setWindowIcon(QtGui.QIcon('mccommand.png'))
+    app.setWindowIcon(QtGui.QIcon('icon.png'))
 
     window = PfdToMp4()
     window.show()
